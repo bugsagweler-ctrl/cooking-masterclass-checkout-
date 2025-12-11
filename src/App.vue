@@ -1,13 +1,17 @@
 <template>
-  <div id="app">
+  <div>
     <AppHeader />
-    <CourseList />
+    <div id="app" class="main-content">
+      <CourseList />
+      <Checkout />
+    </div>
   </div>
 </template>
 
 <script setup>
 import AppHeader from './components/AppHeader.vue'
 import CourseList from './components/CourseList.vue'
+import Checkout from './components/Checkout.vue'
 </script>
 
 <style>
@@ -23,16 +27,25 @@ body {
 }
 
 #app {
-  max-width: 1400px; /* Increase max width */
+  max-width: 1400px;
   margin: 0 auto;
   padding: 1rem;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Add container query support */
-@container (min-width: 1200px) {
-  #app {
-    padding: 2rem;
+/* Main content: course list + checkout */
+.main-content {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+/* Stack on small screens */
+@media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
   }
 }
 </style>
