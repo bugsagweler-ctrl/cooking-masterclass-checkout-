@@ -3,16 +3,16 @@
     <h1>Cooking Masterclass</h1>
 
     <div class="cart-summary">
-      <p>Cart: {{ counter.count }} items</p>
-      <p>Total: R{{ counter.totalPrice.toFixed(2) }}</p>
+      <p>Cart: {{ cart.cartCount }} items</p>
+      <p>Total: R{{ cart.grandTotal.toFixed(2) }}</p>
     </div>
   </header>
 </template>
 
 <script setup>
-import { useCounterStore } from '@/stores/counter.js'
+import { useCartStore } from '@/stores/cart.js'
 
-const counter = useCounterStore()
+const cart = useCartStore()
 </script>
 
 <style scoped>
@@ -20,15 +20,29 @@ const counter = useCounterStore()
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 100%;
-  background: #f5f5f5;
+  /* width: 100%; and background removed and managed by parent in App.vue */
+  color: white;
   padding: 1rem 2rem;
-  border-radius: 10px;
+
+  border-radius: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 10;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #504e44;
 }
 
 .cart-summary {
   text-align: right;
   min-width: 150px;
+}
+
+.cart-summary p {
+  margin: 0;
+  font-size: 0.95rem;
 }
 
 /* Responsive header */

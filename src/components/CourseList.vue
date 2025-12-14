@@ -1,7 +1,7 @@
 <template>
   <div class="course-list">
     <CourseCard
-      v-for="course in coursesStore.courses"
+      v-for="course in cartStore.courses"
       :key="course.id"
       :course="course"
     />
@@ -10,9 +10,9 @@
 
 <script setup>
 import CourseCard from './CourseCard.vue'
-import { useCounterStore } from '@/stores/counter.js'
+import { useCartStore } from '@/stores/cart.js'
 
-const coursesStore = useCounterStore()
+const cartStore = useCartStore()
 
 </script>
 

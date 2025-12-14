@@ -1,12 +1,12 @@
 <template>
   <div :class="['course-card', { soldOut: course.availableCount === 0 }]">
 
-    <img :src="course.image" alt="Course Image" class="course-img" />
+    <img :src="course.image" :alt="course.title" class="course-img" />
 
     <h2>{{ course.title }}</h2>
     <p>Chef: {{ course.chef }}</p>
     <p>Level: {{ course.level }}</p>
-    <p>Price: R{{ course.price }}</p>
+    <p class="price-text">Price: R{{ course.price.toFixed(2) }}</p>
 
     <p v-if="course.availableCount > 0" class="available-text">
       Seats left: {{ course.availableCount }}
@@ -14,27 +14,38 @@
     <p v-else class="sold-out-text">Sold Out</p>
 
     <button
-      @click="toggleSave"
-      :disabled="course.availableCount === 0"
+      @click="handleAddToCart"
+      :disabled="isSoldOut || isInCart"
+      :class="{ inCart: isInCart }"
     >
-      {{ isSaved ? 'Remove from Wishlist' : 'Save to Wishlist' }}
+      {{ isSoldOut ? 'Sold Out' : isInCart ? 'In Cart' : 'Add to Cart' }}
     </button>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
-import { useCounterStore } from '@/stores/counter.js'
+import { useCartStore } from '@/stores/cart.js'
 
 const props = defineProps({
-  course: Object
+  course: {
+    type: Object,
+    required: true
+  }
 })
 
-const counter = useCounterStore()
-const isSaved = computed(() => counter.isSaved(props.course))
+const cart = useCartStore()
 
-function toggleSave() {
-  counter.toggleSave(props.course)
+// Check if the item is sold out
+const isSoldOut = computed(() => props.course.availableCount === 0)
+
+// Check if the item is already in the cart
+const isInCart = computed(() => cart.isInCart(props.course))
+
+function handleAddToCart() {
+  if (!isSoldOut.value) {
+    cart.addToCart(props.course)
+  }
 }
 </script>
 
@@ -61,6 +72,11 @@ function toggleSave() {
   flex-shrink: 0;
 }
 
+.price-text {
+  font-weight: bold;
+  color: #a0f0a0; /* Highlight price */
+}
+
 .soldOut {
   opacity: 0.6;
 }
@@ -79,5 +95,19 @@ button {
   margin-top: auto;
   padding: 0.5rem 1rem;
   width: 100%;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  background-color: #555 !important;
+  color: #ccc;
+}
+
+/* Style for when the item is in the cart */
+button.inCart {
+  background-color: #2ecc71; /* Green color to indicate it's in the cart */
+  color: white;
 }
 </style>

@@ -1,117 +1,75 @@
 <template>
   <aside class="checkout">
-    <h2>Cart</h2>
+    <h2>Shopping Cart</h2>
 
-    <!-- Empty cart message -->
-    <div v-if="counter.items.length === 0" class="empty-cart">
+    <div v-if="cart.cartItems.length === 0" class="empty-cart">
       Your cart is empty.
     </div>
 
-    <!-- Cart items -->
     <div v-else>
-      <div v-for="item in counter.items" :key="item.id" class="checkout-item">
+      <div v-for="item in cart.cartItems" :key="item.id" class="checkout-item">
         <div class="item-info">
-          <p>{{ item.title }}</p>
-          <p>Price: R{{ item.price }}</p>
+          <p><strong>{{ item.title }}</strong></p>
+          <p>Price: R{{ item.price.toFixed(2) }}</p>
           <p v-if="item.availableCount === 0" class="sold-out">Sold Out</p>
         </div>
 
-        <!-- Quantity controls -->
         <div class="quantity-controls">
-          <button @click="decrementItem(item)">-</button>
-          <span>{{ quantities[item.id] || 1 }}</span>
-          <button @click="incrementItem(item)" :disabled="item.availableCount === 0">+</button>
-          <button @click="removeItem(item)" class="remove-btn">Remove</button>
+          <button @click="cart.updateQuantity(item.id, -1)">-</button>
+          <span>{{ item.quantity }}</span>
+          <button
+            @click="cart.updateQuantity(item.id, 1)"
+            :disabled="item.quantity >= item.availableCount"
+          >
+            +
+          </button>
+          <button @click="cart.removeFromCart(item.id)" class="remove-btn">Remove</button>
         </div>
 
-        <!-- Line total -->
         <p class="line-total">
-          Total: R{{ (item.price * (quantities[item.id] || 1)).toFixed(2) }}
+          Total: R{{ (item.price * item.quantity).toFixed(2) }}
         </p>
       </div>
 
       <hr />
 
-      <!-- Totals -->
-      <p>Subtotal: R{{ subtotal.toFixed(2) }}</p>
-      <p>Tax (10%): R{{ tax.toFixed(2) }}</p>
-      <p><strong>Grand Total: R{{ total.toFixed(2) }}</strong></p>
+      <p class="summary-line">Subtotal: R{{ cart.subtotal.toFixed(2) }}</p>
+      <p class="summary-line">Tax (10%): R{{ cart.tax.toFixed(2) }}</p>
+      <p class="summary-total"><strong>Grand Total: R{{ cart.grandTotal.toFixed(2) }}</strong></p>
 
-      <button @click="clearCart" class="clear-btn">Clear Cart</button>
+      <button @click="cart.clearCart" class="clear-btn">Clear Cart</button>
     </div>
   </aside>
 </template>
 
 <script setup>
-import { reactive, computed } from 'vue'
-import { useCounterStore } from '@/stores/counter.js'
-
-const counter = useCounterStore()
-
-// Track quantity of each item
-const quantities = reactive({})
-
-// Initialize quantities with 1
-counter.items.forEach(item => {
-  quantities[item.id] = 1
-})
-
-// Increment quantity
-function incrementItem(item) {
-  if (!quantities[item.id]) quantities[item.id] = 1
-  quantities[item.id]++
-}
-
-// Decrement quantity
-function decrementItem(item) {
-  if (!quantities[item.id]) quantities[item.id] = 1
-  if (quantities[item.id] > 1) quantities[item.id]--
-}
-
-// Remove item from cart
-function removeItem(item) {
-  counter.toggleSave(item)
-  delete quantities[item.id]
-}
-
-// Clear entire cart
-function clearCart() {
-  while (counter.items.length > 0) {
-    counter.toggleSave(counter.items[0])
-  }
-  Object.keys(quantities).forEach(key => delete quantities[key])
-}
-
-// Compute subtotal
-const subtotal = computed(() =>
-  counter.items.reduce((sum, item) => {
-    const qty = quantities[item.id] || 1
-    return sum + item.price * qty
-  }, 0)
-)
-
-// Compute tax (10%)
-const tax = computed(() => subtotal.value * 0.1)
-
-// Compute total
-const total = computed(() => subtotal.value + tax.value)
+import { useCartStore } from '@/stores/cart.js'
+const cart = useCartStore()
 </script>
 
 <style scoped>
 .checkout {
-  background-color: #f5f5f5;
-  padding: 1rem;
-  border-radius: 10px;
-  width: 300px;
+  background-color: rgba(255, 255, 255, 0.15); /* Semi-transparent white */
+  backdrop-filter: blur(10px); /* The magic! Creates the frosted glass effect */
+  border: 1px solid rgba(255, 255, 255, 0.3); /* Light border for definition */
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); /* Subtle shadow */
+  color: white; /* Ensure text is visible over the dark background */
+
+  padding: 1.5rem;
+  border-radius: 15px; /* Slightly larger border radius looks better with glass */
+  width: 320px; /* Slightly wider for better appearance */
   flex-shrink: 0;
 }
 
 .checkout h2 {
   margin-top: 0;
+  color: #fff;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.5); /* Lighter separator */
+  padding-bottom: 0.5rem;
 }
 
 .checkout-item {
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3); /* Semi-transparent line */
   padding-bottom: 0.5rem;
   margin-bottom: 0.5rem;
 }
@@ -121,7 +79,7 @@ const total = computed(() => subtotal.value + tax.value)
 }
 
 .sold-out {
-  color: red;
+  color: #ff6666;
   font-weight: bold;
 }
 
@@ -134,26 +92,44 @@ const total = computed(() => subtotal.value + tax.value)
 
 .quantity-controls button {
   padding: 0.25rem 0.5rem;
+  background-color: rgba(255, 255, 255, 0.2); /* Semi-transparent button background */
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: white;
+  border-radius: 3px;
+  cursor: pointer;
 }
 
 .remove-btn {
   background-color: #e74c3c;
   color: white;
   border: none;
-  border-radius: 3px;
-  cursor: pointer;
 }
 
 .line-total {
   font-weight: bold;
   margin-top: 0.5rem;
+  color: #a0f0a0; /* Highlighted total */
+}
+
+hr {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.summary-line {
+    margin: 0.25rem 0;
+}
+
+.summary-total {
+    margin: 0.5rem 0 1rem;
+    font-size: 1.1em;
+    color: #ffd700; /* Gold/Yellow for Grand Total */
 }
 
 .clear-btn {
   margin-top: 1rem;
   width: 100%;
   padding: 0.5rem;
-  background-color: red;
+  background-color: #c0392b; /* Darker red */
   color: white;
   border: none;
   border-radius: 5px;
@@ -161,7 +137,7 @@ const total = computed(() => subtotal.value + tax.value)
 }
 
 .empty-cart {
-  color: gray;
+  color: #ccc;
   font-style: italic;
 }
 
@@ -169,6 +145,7 @@ const total = computed(() => subtotal.value + tax.value)
 @media (max-width: 768px) {
   .checkout {
     width: 100%;
+    backdrop-filter: blur(5px);
   }
 }
 </style>
